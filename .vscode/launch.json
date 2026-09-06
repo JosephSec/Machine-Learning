@@ -2,12 +2,31 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Current File",
-      "type": "debugpy",
+      "name": "Build",
+      "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/main.py",
-      "console": "integratedTerminal",
-      "justMyCode": true
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/program.exe",
+      "externalConsole": true,
+      "preLaunchTask": "CompileExe",
+    },
+    {
+      "name": "EXE with DLL",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/dll_program.exe",
+      "externalConsole": true,
+      "preLaunchTask": "EXE with DLL"
+    },
+    {
+      "name": "Update Tool",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/dll_program.exe",
+      "externalConsole": true,
+      "preLaunchTask": "Update Tool"
     }
   ]
 }
