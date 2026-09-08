@@ -1,27 +1,32 @@
-#include <NeuralNetwork.hpp>
+#include <windows.h>
+#include <filesystem>
 
-#include <System.hpp>
-#include <User.hpp>
-#include <Renderer.hpp>
+#include <SFML/Graphics.hpp>
+
+
+static sf::RenderWindow window;
+
+static std::filesystem::path PATH;
 
 
 int main(int argc, char* argv[]) {
-  System::init();
-  sf::RenderWindow* window = &Renderer::window;
+  char buffer[MAX_PATH]; GetModuleFileNameA(NULL, buffer, MAX_PATH);
+  PATH = std::filesystem::path(buffer).parent_path().parent_path().string();
+
+  window = sf::RenderWindow(sf::VideoMode{{800,600}}, "Window");
 
 
-  while(window->isOpen()) {
-    while(std::optional<Event> eventOpt = window->pollEvent()) {
+  while(window.isOpen()) {
+    while(std::optional<sf::Event> eventOpt = window.pollEvent()) {
       const auto& event = *eventOpt;
-      User::handle(event);
 
-      if(event.is<Event::Closed>()) window->close();
-      else if(const auto* resized = event.getIf<Event::Resized>())
-        window->setView(sf::View(sf::FloatRect({}, sf::Vector2f(resized->size))));
+      if(event.is<sf::Event::Closed>()) window.close();
+      else if(const auto* resized = event.getIf<sf::Event::Resized>())
+        window.setView(sf::View(sf::FloatRect({}, sf::Vector2f{resized->size})));
     }
 
-    System::update();
-    Renderer::draw();
+    window.clear(sf::Color::Black);
+    window.display();
   }
 
   return 0;
