@@ -56,12 +56,16 @@
     "chrono": "cpp",
     "codecvt": "cpp",
     "cstdarg": "cpp",
+    "cstring": "cpp",
     "ratio": "cpp",
     "iomanip": "cpp",
     "queue": "cpp",
     "ranges": "cpp",
-    "sstream": "cpp"
+    "sstream": "cpp",
+    "cinttypes": "cpp",
+    "any": "cpp",
+    "forward_list": "cpp",
+    "valarray": "cpp"
   },
-  "editor.tabSize": 2,
-  "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe"
+  "editor.tabSize": 2
 }

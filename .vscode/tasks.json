@@ -2,25 +2,80 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CompileExe",
+      "label": "Compile Exe (CPP)",
       "type": "shell",
       "command": "g++",
       "args": [
-        "-O3", "-flto",
-
         "-I${workspaceFolder}/include",
-
-        "-o", "${workspaceFolder}/build/program.exe",
-
         "${workspaceFolder}/src/*.cpp",
-
-        "-lsfml-graphics", "-lsfml-window", "-lsfml-system", "-lglew32", "-lopengl32"
+        
+        "-O3", "-flto",
+        "-o", "${workspaceFolder}/build/program.exe",
+        
+        // "${workspaceFolder}/src/Engine/*.cpp",
+        // "${workspaceFolder}/src/Engine/Renderer/*.cpp",
+        // "${workspaceFolder}/src/Engine/SceneManager/*.cpp",
+        
+        "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
+        // "-lglew32", "-lopengl32",
       ]
     },
     {
-      "label": "Release",
+      "label": "Compile Exe (DLL)",
       "type": "shell",
-      "command": "${workspaceFolder}/assets/Release.bat",
+      "command": "g++",
+      "args": [
+        "-DZENGINE_DLL",
+
+        "-I${workspaceFolder}/include",
+        "${workspaceFolder}/src/*.cpp",
+
+        "-O3", "-flto",
+        "-o", "${workspaceFolder}/build/program.exe",
+        
+        "${workspaceFolder}/bin/zengine.dll",
+        
+        "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
+      ],
+      "dependsOn": ["Compile DLL"]
+    },
+    {
+      "label": "Compile Exe (DLL-Skip)",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-DZENGINE_DLL",
+
+        "-I${workspaceFolder}/include",
+        "${workspaceFolder}/src/*.cpp",
+
+        "-O3", "-flto",
+        "-o", "${workspaceFolder}/build/program.exe",
+        
+        "${workspaceFolder}/bin/zengine.dll",
+        
+        "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
+      ],
+    },
+    {
+      "label": "Compile DLL",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-DZENGINE_DLL_BUILD",
+
+        "-I${workspaceFolder}/include",
+        
+        "-O3", "-flto",
+        "-shared", "-o", "${workspaceFolder}/bin/zengine.dll",
+
+        // "${workspaceFolder}/src/Engine/*.cpp",
+        // "${workspaceFolder}/src/Engine/Renderer/*.cpp",
+        // "${workspaceFolder}/src/Engine/SceneManager/*.cpp",
+        
+        "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
+        "-lglew32", "-lopengl32",
+      ],
     },
     {
       "label": "Import Tool",
@@ -36,11 +91,6 @@
       "label": "Create Static Object Files",
       "type": "shell",
       "command": "C:/Users/${env:USERNAME}/OneDrive/Desktop/VsCode/cpp/my/tools/CreateStaticObjectFiles.bat"
-    },
-    {
-      "label": "Create UI Object File",
-      "type": "shell",
-      "command": "${workspaceFolder}/assets/CreateUIObject.bat"
     }
   ]
 }

@@ -2,31 +2,44 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Build",
+      "name": "Build (CPP)",
       "type": "cppdbg",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/build/program.exe",
       "externalConsole": true,
-      "preLaunchTask": "CompileExe",
+      "preLaunchTask": "Compile Exe (CPP)",
     },
     {
-      "name": "EXE with DLL",
+      "name": "Build (DLL)",
       "type": "cppdbg",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/build/dll_program.exe",
+      "program": "${workspaceFolder}/build/program.exe", 
       "externalConsole": true,
-      "preLaunchTask": "EXE with DLL"
+      "preLaunchTask": "Compile Exe (DLL)",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${workspaceFolder}/bin;${env:PATH}"
+        }
+      ]
     },
     {
-      "name": "Update Tool",
+      "name": "Build (DLL-Skip)",
       "type": "cppdbg",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/build/dll_program.exe",
+      "program": "${workspaceFolder}/build/program.exe", 
       "externalConsole": true,
-      "preLaunchTask": "Update Tool"
+      "preLaunchTask": "Compile Exe (DLL-Skip)",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${workspaceFolder}\\bin;${env:PATH}"
+        }
+      ],
+      "MIMode": "gdb"
     }
   ]
 }
