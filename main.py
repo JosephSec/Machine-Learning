@@ -1,61 +1,85 @@
-class WeightLayer:
-  def __init__(self, input_count, output_count):
-    self.input_count = input_count
-    self.output_count = output_count
+import os
 
-    self.weights = [[0] * output_count] * input_count
-    self.biases = [[0] * output_count] * input_count
+from FNN import *
 
-  def Learn(self, learn_rate, cost) -> None:
-    for i in range(self.input_count):
-      for j in range(self.output_count):
-        self.weights[i][j] -= cost[j] * learn_rate
-        self.biases[i][j] -= cost[j] * learn_rate
-
-  def CalculateOutputs(self, inputs) -> list[float]:
-    outputs = [0] * self.output_count
-
-    for i in range(self.input_count):
-      for j in range(self.output_count):
-        outputs[j] += inputs[i] * self.weights[i][j] + self.biases[i][j]
-
-    return outputs
-  def CalculateCost(self, data_point) -> list[float]:
-    outputs = self.CalculateOutputs(data_point[0])
-    cost = [0] * self.output_count
-
-    for i in range(self.output_count):
-      cost[i] = outputs[i] - data_point[1][i]
-
-    return cost
-
-output_layer = WeightLayer(1, 2)
 
 training_data = [
-  [[  1], [  1, -1]],
-  [[ -1], [ -1,  1]],
-  # [[ .5], [ .5,-.5]],
-  # [[-.5], [-.5, .5]],
-  # [[  0], [  0,  0]],
+  DataPoint(
+    Matrix.init_from_data([[1,0]]),
+    Matrix.init_from_data([[1,0]])
+  )
 ]
 
-test_data = training_data[0]
+neural_network = FNN([2,2])
 
-print("-- PRE TRAINING ITERATIONS --")
-print(f"{test_data[0]} -> {output_layer.CalculateOutputs(test_data[0])}")
-print(f"Cost: {output_layer.CalculateCost(test_data)}")
-print("-- PRE TRAINING ITERATIONS --\n")
 
-training_iterations = 10000
-print(f"Training Iterations: {training_iterations}\n")
-for i in range(10000):
+os.system("cls")
+
+#Neural Network Layers
+for layer in neural_network.layers:
+  print(f"weights: {layer.weights.data}")
+  print(f"biases: {layer.biases.data}\n")
+#Neural Network Layers
+
+#Pre Training Results
+for data_point in training_data:
+  output = neural_network.calculate_outputs(data_point.inputs)
+
+  print(f"Input: {data_point.inputs.data[0]}")
+  print(f"Output: {output.data[0]}")
+  print(f"Loss: {neural_network.calculate_loss(data_point, output)}\n")
+
+input()
+os.system("cls")
+#Pre Training Results
+
+#Training
+LEARN_RATE = .1
+NUDGE = .001
+
+iteration_count = int(input("Enter Iteration Count: "))
+os.system("cls")
+
+print(f"training for {iteration_count} iterations...")
+
+for iteration in range(iteration_count):
   for data_point in training_data:
-    output_layer.Learn(.01, output_layer.CalculateCost(data_point))
+    pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
 
-print("-- POST TRAINING ITERATIONS --")
-print(f"{test_data[0]} -> {output_layer.CalculateOutputs(test_data[0])}")
-print(f"Cost: {output_layer.CalculateCost(test_data)}")
-print("-- POST TRAINING ITERATIONS --\n")
+    output_layer = neural_network.layers[-1]
 
-print(output_layer.weights)
-print(output_layer.biases)
+    for i in range(output_layer.output_count):
+      for j in range(output_layer.input_count):
+        output_layer.weights[j][i] += NUDGE
+        post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
+        output_layer.weights[j][i] -= NUDGE
+
+        output_layer.weights[j][i] -= LEARN_RATE * ((post_loss - pre_loss) / NUDGE)
+    
+    for i in range(output_layer.output_count):
+      output_layer.biases[0][i] += NUDGE;
+      post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
+      output_layer.biases[0][i] -= NUDGE;
+
+      output_layer.biases[0][i] -= LEARN_RATE * ((post_loss - pre_loss) / NUDGE)
+
+print("training finished.")
+input()
+#Training
+
+#Post Training Results
+for data_point in training_data:
+  output = neural_network.calculate_outputs(data_point.inputs)
+
+  print(f"Input: {data_point.inputs.data[0]}")
+  print(f"Output: {output.data[0]}")
+  print(f"Loss: {neural_network.calculate_loss(data_point, output)}\n")
+
+input()
+#Post Training Results
+
+#Neural Network Layers
+for layer in neural_network.layers:
+  print(f"weights: {layer.weights.data}")
+  print(f"biases: {layer.biases.data}\n")
+#Neural Network Layers
