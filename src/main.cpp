@@ -4,6 +4,9 @@
 #include <User.hpp>
 #include <Renderer.hpp>
 
+// #define CPU_MODE
+#define GPU_MODE
+
 
 int main(int argc, char* argv[]) {
   System::init();

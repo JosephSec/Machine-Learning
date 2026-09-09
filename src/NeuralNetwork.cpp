@@ -108,12 +108,16 @@ std::vector<float> WeightLayer::CalculateHiddenLayerNodeValues(const WeightLayer
 void WeightLayer::ApplyGradients(float learnRate) {
   for(int nodeOut = 0; nodeOut < outputCount; nodeOut++) {
     biases[nodeOut] -= costGradientB[nodeOut] * learnRate;
+  #if !defined(GPU_MODE) || defined(CPU_MODE)
     for(int nodeIn = 0; nodeIn < inputCount; nodeIn++) {
       weights(nodeIn, nodeOut) -= costGradientW(nodeIn, nodeOut) * learnRate;
     }
+  #endif
   }
 
-  // weights = GPUMath::ASubtractBMulScalar(weights, costGradientW, learnRate);
+#ifdef GPU_MODE
+  weights = GPUMath::ASubtractBMulScalar(weights, costGradientW, learnRate);
+#endif
 }
 void WeightLayer::UpdateGradients(const std::vector<float>& nodeValues) {
   for(int nodeOut = 0; nodeOut < outputCount; nodeOut++) {
@@ -334,7 +338,7 @@ float NeuralNetwork::Cost(DataPoint dataPoint) {
     cost += outputLayer.NodeCost(outputs[nodeOut], dataPoint.expectedOutputs[nodeOut]);
   }
 
-  return cost;
+  return cost / static_cast<float>(outputs.size());;
 }
 float NeuralNetwork::Cost(const std::vector<DataPoint>& data) {
   float totalCost = 0;
