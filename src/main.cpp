@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 
 #include <NeuralNetwork.hpp>
 
@@ -22,9 +23,14 @@ int main(int argc, char* argv[]) {
       Matrix(MatrixData{{1,0}}),
       Matrix(MatrixData{{1,0}})
     },
+    DataPoint{
+      Matrix(MatrixData{{0,0}}),
+      Matrix(MatrixData{{0,0}})
+    },
   };
 
   FNN neuralNetwork = FNN({2,2});
+  neuralNetwork.SaveToFile(PATH/"assets/neural_network_pre.txt", trainingData);
 
   { //Pre Training Results
     for(const DataPoint dataPoint : trainingData) {
@@ -52,10 +58,11 @@ int main(int argc, char* argv[]) {
         static constexpr NNValueType learnRate = .01;
         static constexpr NNValueType nudge = .0001;
 
-        const NNValueType preLoss = neuralNetwork.CalculateLoss(_dataPoint);
 
         for(int i = 0; i < neuralNetwork.m_layers.back().m_outputCount; i++) {
           for(int j = 0; j < neuralNetwork.m_layers.back().m_inputCount; j++) {
+            const NNValueType preLoss = neuralNetwork.CalculateLoss(_dataPoint);
+
             NNValueType &weightRef = neuralNetwork.m_layers.back().m_weights[j][i];
 
             weightRef += nudge;
@@ -67,6 +74,8 @@ int main(int argc, char* argv[]) {
         }
         
         for(int i = 0; i < neuralNetwork.m_layers.back().m_outputCount; i++) {
+          const NNValueType preLoss = neuralNetwork.CalculateLoss(_dataPoint);
+
           NNValueType &biasRef = neuralNetwork.m_layers.back().m_biases[0][i];
 
           biasRef += nudge;
@@ -90,6 +99,8 @@ int main(int argc, char* argv[]) {
                   "Loss: " << neuralNetwork.CalculateLoss(dataPoint) << "\n\n";
     }
   } //Post Training Results
+  
+  neuralNetwork.SaveToFile(PATH/"assets/neural_network_post.txt", trainingData);
 
   std::cin.get();
   return 0;
