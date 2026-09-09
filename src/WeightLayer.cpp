@@ -1,53 +1,96 @@
 #include <WeightLayer.hpp>
 
-#include <chrono>
-#include <random>
+#include <cmath>
+#include <stdexcept>
+#include <glm/gtc/constants.hpp>
 
 
-Matrix::Matrix(const glm::ivec2 _size) : m_size(_size) {
-  m_data = std::vector<std::vector<NNValueType>>(_size.x, std::vector<NNValueType>(_size.y));
+NNValueType WeightLayer::MSENodeLoss(NNValueType _output, NNValueType _expectedOutput) {
+  NNValueType error = _output - _expectedOutput;
+  return (error * error) * .5;
 }
-Matrix::Matrix(const glm::ivec2 _size, NNValueType _min, NNValueType _max) : m_size(_size) {
-  m_data = std::vector<std::vector<NNValueType>>(_size.x, std::vector<NNValueType>(_size.y));
+NNValueType WeightLayer::CCENodeLoss(NNValueType _output, NNValueType _expectedOutput) {
+  if(_expectedOutput <= 0) return 0;
+  return -(_expectedOutput * std::log(std::max<NNValueType>(_output, 1e-15)));
+}
+NNValueType WeightLayer::MSENodeLossDerivative(NNValueType _output, NNValueType _expectedOutput) {
+  return _output - _expectedOutput;
+}
+NNValueType WeightLayer::CCENodeLossDerivative(NNValueType _output, NNValueType _expectedOutput) {
+  if(_expectedOutput <= 0) return 0.0;
+  return -_expectedOutput / std::max<NNValueType>(_output, 1e-15);
+}
 
-  std::mt19937 gen(std::chrono::high_resolution_clock().now().time_since_epoch().count());
-  std::uniform_real_distribution<NNValueType> rand(_min, _max);
 
-  for(int x = 0; x < _size.x; x++) {
-    for(int y = 0; y < _size.y; y++) m_data[x][y] = rand(gen);
+NNValueType WeightLayer::Activation(NNValueType _weightedInput) const {
+  switch(m_activation) {
+    default:
+    case ActivationType::Linear: return _weightedInput;
+
+    case ActivationType::Sigmoid: return 1.0 / (1.0 + std::exp(-_weightedInput));
+    case ActivationType::Tanh: return std::tanh(_weightedInput);
+    case ActivationType::ReLU: return std::max<NNValueType>(0.0, _weightedInput);    
+    case ActivationType::LeakyReLU: return _weightedInput > 0.0? _weightedInput : _weightedInput * .01;
+    case ActivationType::SiLU: _weightedInput / (1 + std::exp(-_weightedInput));
+    case ActivationType::GELU: return 0.5 * _weightedInput * (1.0 + std::tanh(std::sqrt(glm::two_over_pi<NNValueType>()) * (_weightedInput + 0.044715 * std::pow(_weightedInput, 3))));
+  }
+}
+NNValueType WeightLayer::ActivationDerivative(NNValueType _weightedInput) const {
+  switch(m_activation) {
+    default:
+    case ActivationType::Linear: return 1;
+
+    case ActivationType::Sigmoid:
+      {
+        float activation = Activation(_weightedInput);
+        return activation * (1 - activation);
+      }
+    case ActivationType::Tanh:
+      {
+        float activation = Activation(_weightedInput);
+        return 1 - (activation * activation);
+      }
+    case ActivationType::ReLU: return static_cast<NNValueType>(_weightedInput > 0);
+    case ActivationType::LeakyReLU:
+      {
+        float activation = Activation(_weightedInput);
+        return activation > 0 ? 1 : .01;
+      }
+    case ActivationType::SiLU:
+      { 
+        NNValueType sig = 1.0 / (1.0 + std::exp(-_weightedInput));
+        return sig * (1.0 + _weightedInput * (1.0 - sig));
+      }
+    case ActivationType::GELU:
+      {
+        NNValueType x3 = std::pow(_weightedInput, 3);
+        NNValueType inner = std::sqrt(glm::two_over_pi<NNValueType>()) * (_weightedInput + 0.044715 * x3);
+        NNValueType tanh_inner = std::tanh(inner);
+        NNValueType sech2_inner = 1.0 - (tanh_inner * tanh_inner);
+        
+        return 0.5 * (1.0 + tanh_inner) + (0.5 * _weightedInput * sech2_inner * std::sqrt(glm::two_over_pi<NNValueType>()) * (1.0 + 3.0 * 0.044715 * _weightedInput * _weightedInput));
+      }
   }
 }
 
-Matrix::operator std::string() const {
-  std::stringstream ss;
+Matrix WeightLayer::CalculateOutputs(const Matrix &_inputs) {
+  Matrix output(glm::ivec2(1, m_outputCount));
 
-  ss << "{\n";
-  for(int x = 0; x < m_size.x - 1; x++) {
-    ss << "\t{" << join_string<NNValueType>(m_data[x], ", ") << "}\n";
-  }
-  ss << "\t{" << join_string<NNValueType>(m_data.back(), ", ") << "}\n}";
+  for(int out = 0; out < m_outputCount; out++) {
+    NNValueType weightedInput = m_biases[0][out];
+    for(int in = 0; in < m_inputCount; in++) weightedInput += m_weights[in][out] * _inputs[0][in];
 
-  return ss.str();
-}
-
-
-static NNValueType ActivationFunction(NNValueType _x) {
-  return 1.0f / (1.0f + std::exp(-_x));
-}
-Matrix WeightLayer::CalculateOutputs(const std::vector<NNValueType> &_inputs) {
-  std::vector<NNValueType> output(outputCount);
-
-  for(int out = 0; out < outputCount; out++) {
-    NNValueType weightedInput = biases[0][out];
-    for(int in = 0; in < inputCount; in++) weightedInput += weights[in][out];
-
-    output[out] = ActivationFunction(weightedInput);
+    output[0][out] = Activation(weightedInput);
   }
 
-  return outputs;
+  return output;
 }
+
 
 WeightLayer::WeightLayer(uint32_t _inputCount, uint32_t _outputCount) {
-  inputCount = _inputCount;
-  outputCount = _outputCount;
+  m_inputCount = _inputCount;
+  m_outputCount = _outputCount;
+
+  m_weights = Matrix(glm::ivec2(m_inputCount, m_outputCount), -.5, .5);
+  m_biases = Matrix(glm::ivec2(1, m_outputCount), -.5, .5);
 }
