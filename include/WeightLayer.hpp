@@ -12,21 +12,27 @@ enum class ActivationType {
   SiLU,
   GELU,
 };
+enum class LossType {
+  MeanSquaredError,
+  CategoricalCrossEntropy
+};
+
 class WeightLayer {
 public:
-  static NNValueType MSENodeLoss(NNValueType _output, NNValueType _expectedOutput);
-  static NNValueType CCENodeLoss(NNValueType _output, NNValueType _expectedOutput);
-  static NNValueType MSENodeLossDerivative(NNValueType _output, NNValueType _expectedOutput);
-  static NNValueType CCENodeLossDerivative(NNValueType _output, NNValueType _expectedOutput);
+  WeightLayer(uint32_t _inputCount, uint32_t _outputCount);
 
 
   NNValueType Activation(NNValueType _weightedInput) const;
-  NNValueType ActivationDerivative(NNValueType _weightedInput) const;  
+  NNValueType ActivationDerivative(NNValueType _weightedInput) const;
 
   Matrix CalculateOutputs(const Matrix &_inputs);
 
+  Matrix CalculateOutputLayerNodeValues(const Matrix &_expectedOutputs, LossType _lossType) const;
+  Matrix CalculateHiddenLayerNodeValues(const WeightLayer &_oldLayer, const Matrix &_oldNodeValues) const;
 
-  WeightLayer(uint32_t _inputCount, uint32_t _outputCount);
+  void UpdateGradients(const Matrix &_nodeValues);
+  void ApplyGradients(NNValueType _learnRate);
+  void ClearGradients();
 
 
   ActivationType m_activation = ActivationType::Linear;
@@ -36,4 +42,11 @@ public:
 
   Matrix m_weights;
   Matrix m_biases;
+
+  Matrix m_costGradientW;
+  Matrix m_costGradientB;
+
+  Matrix m_weightedInputs;
+  Matrix m_activations;
+  Matrix m_inputs;
 };
