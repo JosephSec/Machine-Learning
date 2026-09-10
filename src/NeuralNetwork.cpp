@@ -37,9 +37,8 @@ bool FNN::SaveToFile(const std::filesystem::path &_path, const std::vector<DataP
     file << "biases: " << std::string(_layer.m_biases) << '\n';
   }
 
-  float totalLoss = 0;
-  for(const DataPoint &_dataPoint : _trainingData) totalLoss += CalculateLoss(_dataPoint);
-  file << "average loss: " << (totalLoss / static_cast<NNValueType>(_trainingData.size())) << '\n';
+  file << "average loss: " << CalculateLoss(_trainingData) << '\n';
+  file << "iterations: " << m_trainingIterations << '\n';
 
   file.close();
   return true;

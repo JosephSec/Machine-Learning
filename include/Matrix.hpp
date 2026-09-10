@@ -7,7 +7,7 @@
 
 
 template <typename T>
-static std::string join_string(const std::vector<T> &_vec, const std::string &_delim) {
+static std::string join_string(const std::vector<T> &_vec, const std::string &_delim = ", ") {
   std::stringstream ss;
 
   ss << _vec[0];
