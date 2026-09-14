@@ -67,5 +67,6 @@
     "forward_list": "cpp",
     "valarray": "cpp"
   },
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe"
 }

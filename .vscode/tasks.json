@@ -12,9 +12,7 @@
         "-O3", "-flto",
         "-o", "${workspaceFolder}/build/program.exe",
         
-        // "${workspaceFolder}/src/Engine/*.cpp",
-        // "${workspaceFolder}/src/Engine/Renderer/*.cpp",
-        // "${workspaceFolder}/src/Engine/SceneManager/*.cpp",
+        "${workspaceFolder}/src/NeuralNet/*.cpp",
         
         "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
         // "-lglew32", "-lopengl32",
@@ -25,7 +23,7 @@
       "type": "shell",
       "command": "g++",
       "args": [
-        "-DZENGINE_DLL",
+        "-DNEURALNET_DLL",
 
         "-I${workspaceFolder}/include",
         "${workspaceFolder}/src/*.cpp",
@@ -33,7 +31,7 @@
         "-O3", "-flto",
         "-o", "${workspaceFolder}/build/program.exe",
         
-        "${workspaceFolder}/bin/zengine.dll",
+        "${workspaceFolder}/bin/NEURALNET.dll",
         
         "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
       ],
@@ -44,7 +42,7 @@
       "type": "shell",
       "command": "g++",
       "args": [
-        "-DZENGINE_DLL",
+        "-DNEURALNET_DLL",
 
         "-I${workspaceFolder}/include",
         "${workspaceFolder}/src/*.cpp",
@@ -52,7 +50,7 @@
         "-O3", "-flto",
         "-o", "${workspaceFolder}/build/program.exe",
         
-        "${workspaceFolder}/bin/zengine.dll",
+        "${workspaceFolder}/bin/NEURALNET.dll",
         
         "-lsfml-graphics", "-lsfml-window", "-lsfml-system",
       ],
@@ -62,12 +60,12 @@
       "type": "shell",
       "command": "g++",
       "args": [
-        "-DZENGINE_DLL_BUILD",
+        "-DNEURALNET_DLL_BUILD",
 
         "-I${workspaceFolder}/include",
         
         "-O3", "-flto",
-        "-shared", "-o", "${workspaceFolder}/bin/zengine.dll",
+        "-shared", "-o", "${workspaceFolder}/bin/NEURALNET.dll",
 
         // "${workspaceFolder}/src/Engine/*.cpp",
         // "${workspaceFolder}/src/Engine/Renderer/*.cpp",
