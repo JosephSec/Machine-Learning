@@ -2,11 +2,31 @@
 
 #include <stdexcept>
 #include <cmath>
+#include <fstream>
 
 
 namespace NeuralNetwork {
   FNN::~FNN() {
     for(Layer *layer : m_layers) delete layer;
+  }
+
+  bool FNN::SaveToFile(const std::filesystem::path &_filePath) {
+    std::ofstream file(_filePath);
+    if(file.is_open() == false) return false;
+
+    for(const Layer *_layer : m_layers) {
+      switch(_layer->RetreiveType()) {
+        case LayerType::Dense:
+          const Dense<> *dense = dynamic_cast<const Dense<>*>(_layer);
+          file << "Dense Layer:\n" <<
+                  "weights:\n" << dense->m_weights.ToString() << '\n' <<
+                  "biases:\n" << dense->m_weights.ToString() << "\n\n";
+          break;
+      }
+    }
+
+    file.close();
+    return true;
   }
 
   Tensor<float> FNN::Forward(Tensor<float> _input) {

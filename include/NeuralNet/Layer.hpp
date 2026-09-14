@@ -9,12 +9,16 @@ namespace NEURALNET_API NeuralNetwork {
     Constant,
     Random
   };
+  enum class LayerType {
+    Dense
+  };
 
   class Layer {
   public:
     explicit Layer(uint32_t _in, uint32_t _out)
     : m_inCount(_in), m_outCount(_out) {}
 
+    virtual LayerType RetreiveType() const noexcept = 0;
     virtual std::vector<Tensor<float>*> RetreiveTrainables() = 0;
 
     virtual Tensor<float> Forward(const Tensor<float> &_input) = 0;
@@ -23,7 +27,7 @@ namespace NEURALNET_API NeuralNetwork {
     uint32_t m_inCount;
     uint32_t m_outCount;
   };
-  
+
   template <TensorInit WeightInit = TensorInit::Random, TensorInit BiasInit = TensorInit::Constant>
   class Dense : public Layer {
   public:
@@ -49,6 +53,9 @@ namespace NEURALNET_API NeuralNetwork {
       }
     }
 
+    LayerType RetreiveType() const noexcept override {
+      return LayerType::Dense;
+    }
     std::vector<Tensor<float>*> RetreiveTrainables() override {
       return {&m_weights, &m_biases};
     }
