@@ -4,12 +4,9 @@
 #include <cmath>
 #include <fstream>
 
-<<<<<<< Updated upstream
-=======
 #include <SFML/System/Clock.hpp>
 #include <SFML/System/Time.hpp>
 
->>>>>>> Stashed changes
 
 namespace NeuralNetwork {
   FNN::~FNN() {
@@ -35,8 +32,6 @@ namespace NeuralNetwork {
     return true;
   }
 
-<<<<<<< Updated upstream
-=======
   LearnData FNN::Learn(uint64_t _epochs, float _learnRate, const std::vector<DataPoint> &_dataSet) {
     static constexpr float nudge = .000001f;
 
@@ -81,7 +76,6 @@ namespace NeuralNetwork {
     };
   }
 
->>>>>>> Stashed changes
   Tensor<float> FNN::Forward(Tensor<float> _input) {
     for(Layer *layer : m_layers) {
       _input = layer->Forward(_input);
