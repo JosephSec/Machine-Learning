@@ -4,6 +4,12 @@
 #include <cmath>
 #include <fstream>
 
+<<<<<<< Updated upstream
+=======
+#include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
+
+>>>>>>> Stashed changes
 
 namespace NeuralNetwork {
   FNN::~FNN() {
@@ -29,6 +35,53 @@ namespace NeuralNetwork {
     return true;
   }
 
+<<<<<<< Updated upstream
+=======
+  LearnData FNN::Learn(uint64_t _epochs, float _learnRate, const std::vector<DataPoint> &_dataSet) {
+    static constexpr float nudge = .000001f;
+
+    float (FNN::*lossFunc)(const DataPoint&);
+    lossFunc = &FNN::MSELoss;
+
+    sf::Clock timeClock;
+
+    for(uint64_t epoch = 0; epoch < _epochs; epoch++) {
+      for(const DataPoint &dataPoint : _dataSet) {
+        for(Layer *layer : m_layers) {
+          std::vector<Tensor<float>*> trainables = layer->RetreiveTrainables();
+
+          for(Tensor<float> *trainable : trainables) {
+            const uint32_t neuronCount = trainable->m_width * trainable->m_height;
+
+            for(int i = 0; i < neuronCount; i++) {
+              const float preLoss = (this->*lossFunc)(dataPoint);
+              *(trainable->m_data + i) += nudge;
+
+              const float postLoss = (this->*lossFunc)(dataPoint);
+              *(trainable->m_data + i) -= nudge;
+
+              float slope = (postLoss - preLoss) / nudge;
+              *(trainable->m_data + i) -= _learnRate * slope;
+            }
+          }
+        }
+      }
+    }
+
+    float averageLoss = 0;
+    for(const DataPoint &dataPoint : _dataSet) {
+      averageLoss += (this->*lossFunc)(dataPoint);
+    }
+    averageLoss = averageLoss / static_cast<float>(_dataSet.size());
+  
+    return LearnData{
+      .time = timeClock.restart().asSeconds(),
+      .loss = averageLoss,
+      .epochs = _epochs
+    };
+  }
+
+>>>>>>> Stashed changes
   Tensor<float> FNN::Forward(Tensor<float> _input) {
     for(Layer *layer : m_layers) {
       _input = layer->Forward(_input);
