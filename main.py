@@ -35,7 +35,7 @@ os.system("cls")
 
 #Training
 LEARN_RATE = .1
-NUDGE = .001
+NUDGE = .00001
 
 iteration_count = int(input("Enter Iteration Count: "))
 os.system("cls")
@@ -44,12 +44,12 @@ print(f"training for {iteration_count} iterations...")
 
 for iteration in range(iteration_count):
   for data_point in training_data:
-    pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
-
     output_layer = neural_network.layers[-1]
 
     for i in range(output_layer.output_count):
       for j in range(output_layer.input_count):
+        pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
+
         output_layer.weights[j][i] += NUDGE
         post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
         output_layer.weights[j][i] -= NUDGE
@@ -57,6 +57,8 @@ for iteration in range(iteration_count):
         output_layer.weights[j][i] -= LEARN_RATE * ((post_loss - pre_loss) / NUDGE)
     
     for i in range(output_layer.output_count):
+      pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
+
       output_layer.biases[0][i] += NUDGE;
       post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
       output_layer.biases[0][i] -= NUDGE;

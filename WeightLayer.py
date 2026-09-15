@@ -29,10 +29,9 @@ class WeightLayer:
     self.output_count = output_count
 
     self.weights = Matrix(glm.ivec2(self.input_count, self.output_count))
-    self.biases  = Matrix(glm.ivec2(1, self.output_count))
+    self.biases  = Matrix(glm.ivec2(1, self.output_count), 0)
 
     self.weights.randomize_data(-.5, .5)
-    self.biases.randomize_data(-.5, .5)
 
   def calculate_outputs(self, inputs: Matrix) -> Matrix:
     output = Matrix(glm.ivec2(1, self.output_count), 0)
@@ -42,7 +41,7 @@ class WeightLayer:
       for i in range(self.input_count):
         weightedInput += self.weights[i][o] * inputs[0][i]
 
-      output[0][o] = self.Activation(weightedInput)
+      output[0][o] = weightedInput
 
     return output
 
