@@ -1,87 +1,62 @@
 import os
+import random
+from glm import vec2
 
-from FNN import *
+import VisualTest
 
-
-training_data = [
-  DataPoint(
-    Matrix.init_from_data([[1,0]]),
-    Matrix.init_from_data([[1,0]])
-  )
-]
-
-neural_network = FNN([2,2])
+from NeuralNet.FNN import *
 
 
+# training_data = [
+#   DataPoint(Tensor(1,2).load_list([1,0]), Tensor(1,2).load_list([1,0])),
+#   DataPoint(Tensor(1,2).load_list([0,1]), Tensor(1,2).load_list([0,1])),
+#   DataPoint(Tensor(1,2).load_list([1,1]), Tensor(1,2).load_list([1,1])),
+# ]
+training_data = []
+for i in range(100):
+  a = vec2(random.uniform(0,1), random.uniform(0,1))
+  b = vec2(random.uniform(0,1), random.uniform(0,1))
+
+  training_data.append(DataPoint(
+    Tensor(1,4).load_list([a.x,a.y, b.x,b.y]),
+    Tensor(1,2).load_list([b.x-a.x, b.y-a.y])
+  ))
+
+fnn = FNN()
+fnn.add_layer(Layer.Dense(4,8))
+fnn.add_layer(Layer.Dense(8,2))
+
+
+epoch_count = int(input("Enter Epoch Count: "))
 os.system("cls")
 
-#Neural Network Layers
-for layer in neural_network.layers:
-  print(f"weights: {layer.weights.data}")
-  print(f"biases: {layer.biases.data}\n")
-#Neural Network Layers
+pre_loss = fnn.loss(training_data[0], fnn.forward(training_data[0].inputs))
 
-#Pre Training Results
-for data_point in training_data:
-  output = neural_network.calculate_outputs(data_point.inputs)
+print(f"training for {epoch_count} epochs...")
+fnn.learn(epoch_count, .01, training_data)
 
-  print(f"Input: {data_point.inputs.data[0]}")
-  print(f"Output: {output.data[0]}")
-  print(f"Loss: {neural_network.calculate_loss(data_point, output)}\n")
+print(f"\npre training loss: {pre_loss}")
+print(f"post training loss: {fnn.loss(training_data[0], fnn.forward(training_data[0].inputs))}")
 
-input()
-os.system("cls")
-#Pre Training Results
+input("Press Enter to Continue...")
 
-#Training
-LEARN_RATE = .1
-NUDGE = .00001
 
-iteration_count = int(input("Enter Iteration Count: "))
-os.system("cls")
+VisualTest.init_window()
 
-print(f"training for {iteration_count} iterations...")
+def create_circle(x, y, r, **kwargs):
+  return VisualTest.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
+create_circle(VisualTest.window_size.x // 2, VisualTest.window_size.y // 2, 25, fill="green", width=0)
 
-for iteration in range(iteration_count):
-  for data_point in training_data:
-    output_layer = neural_network.layers[-1]
+def update() -> None:
+  delta_time = VisualTest.update_delta_time()
+  mouse_pos = vec2(VisualTest.root.winfo_pointerxy()) - window_pos - vec2(9,31)
+  window_pos = vec2(VisualTest.root.winfo_x(), VisualTest.root.winfo_y())
+  norm_mouse = vec2(mouse_pos.x / window_size)
 
-    for i in range(output_layer.output_count):
-      for j in range(output_layer.input_count):
-        pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
 
-        output_layer.weights[j][i] += NUDGE
-        post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
-        output_layer.weights[j][i] -= NUDGE
+  print(norm_mouse)
 
-        output_layer.weights[j][i] -= LEARN_RATE * ((post_loss - pre_loss) / NUDGE)
-    
-    for i in range(output_layer.output_count):
-      pre_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
+  VisualTest.root.after(1, update)
 
-      output_layer.biases[0][i] += NUDGE;
-      post_loss = neural_network.calculate_loss(data_point, neural_network.calculate_outputs(data_point.inputs))
-      output_layer.biases[0][i] -= NUDGE;
-
-      output_layer.biases[0][i] -= LEARN_RATE * ((post_loss - pre_loss) / NUDGE)
-
-print("training finished.")
-input()
-#Training
-
-#Post Training Results
-for data_point in training_data:
-  output = neural_network.calculate_outputs(data_point.inputs)
-
-  print(f"Input: {data_point.inputs.data[0]}")
-  print(f"Output: {output.data[0]}")
-  print(f"Loss: {neural_network.calculate_loss(data_point, output)}\n")
-
-input()
-#Post Training Results
-
-#Neural Network Layers
-for layer in neural_network.layers:
-  print(f"weights: {layer.weights.data}")
-  print(f"biases: {layer.biases.data}\n")
-#Neural Network Layers
+update()
+VisualTest.root.mainloop()
