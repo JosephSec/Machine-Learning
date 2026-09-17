@@ -7,11 +7,6 @@ import VisualTest
 from NeuralNet.FNN import *
 
 
-# training_data = [
-#   DataPoint(Tensor(1,2).load_list([1,0]), Tensor(1,2).load_list([1,0])),
-#   DataPoint(Tensor(1,2).load_list([0,1]), Tensor(1,2).load_list([0,1])),
-#   DataPoint(Tensor(1,2).load_list([1,1]), Tensor(1,2).load_list([1,1])),
-# ]
 training_data = []
 for i in range(100):
   a = vec2(random.uniform(0,1), random.uniform(0,1))
