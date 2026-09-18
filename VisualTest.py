@@ -22,12 +22,12 @@ canvas: tk.Canvas = None
 window_size: ivec2 = None
 
 
-def init_window(win_size=ivec2(800,600)) -> None:
+def init_window(win_size=ivec2(800,600), win_name="Window") -> None:
   global window_size, root
   window_size = win_size
 
   root = tk.Tk()
-  root.title("Tetris")
+  root.title(win_name)
   root.geometry(str(window_size.x) + "x" + str(window_size.y) + "+0+0")
 
   init_canvas(root)

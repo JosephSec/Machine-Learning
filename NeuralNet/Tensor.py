@@ -1,4 +1,6 @@
 import random
+import ctypes
+import NeuralNet.c_bridge as c_bridge
 
 __all__ = ["Tensor"]
 
@@ -26,5 +28,12 @@ class Tensor:
     return output
 
   def randomize(self, min=-.5, max=.5) -> Tensor:
-    random_list = [(random.uniform(min,max)) for _ in self.m_data]
-    return Tensor(self.rows, self.cols).load_list(random_list)
+    count = self.rows * self.cols
+    InputArrayType = ctypes.c_float * count
+    output = InputArrayType()
+
+    c_bridge.lib.InitRandomFloat(output, ctypes.c_uint(count), ctypes.c_float(min), ctypes.c_float(max))
+    return Tensor(self.rows, self.cols).load_list(list(output))
+
+    # random_list = [(random.uniform(min,max)) for _ in self.m_data]
+    # return Tensor(self.rows, self.cols).load_list(random_list)

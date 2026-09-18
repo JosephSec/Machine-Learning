@@ -8,10 +8,11 @@
       "args": [
         "-DPYLIB_EXPORT",
 
-        "${workspaceFolder}/main.cpp",
+        "-I${workspaceFolder}/NeuralNet/c_lib",
+        "${workspaceFolder}/NeuralNet/c_lib/main.c",
 
         "-m64", "-O3", "-flto","-shared",
-        "-o", "${workspaceFolder}/bin/clib.dll",
+        "-o", "${workspaceFolder}/NeuralNet/c_lib/c_lib.dll",
 
         "-static", "-static-libgcc", "-static-libstdc++",
       ],
