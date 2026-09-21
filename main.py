@@ -1,88 +1,96 @@
 import os
-import random
 import time
-from glm import vec2
+import numpy
 
-import VisualTest
+NUDGE = .00001
 
-from NeuralNet.FNN import *
+def MSE(output: float, expected_output: float):
+  error = output - expected_output
+  return (error * error) * .5
+
+class DataPoint:
+  def __init__(self, inputs, outputs):
+    self.inputs = inputs
+    self.outputs = outputs
+
+class Dense:
+  def __init__(self, inputs=1, outputs=1):
+    self.inputs = inputs
+    self.outputs = outputs
+
+    self.biases = numpy.full((1,outputs), 0, dtype=numpy.float32)
+
+    rng = numpy.random.default_rng()
+    self.weights = rng.uniform(low=-.5, high=.5, size=(inputs,outputs)).astype(numpy.float32)
+
+  def forward(self, input_arr: numpy.ndarray) -> numpy.ndarray:
+    return numpy.dot(input_arr, self.weights) + self.biases
+
+class FNN:
+  def __init__(self):
+    self.layers: list[Dense] = []
+
+  def add_layer(self, layer: Dense) -> None:
+    self.layers.append(layer)
+
+  def forward(self, input: numpy.ndarray) -> numpy.ndarray:
+    output = input
+    for layer in self.layers: output = layer.forward(output)
+    return output
+
+  def loss(self, data_point: DataPoint, outputs) -> float:
+    error = outputs - data_point.outputs
+    return float(numpy.mean(error ** 2))
+  
+  def learn(self, epochs, learn_rate, data_set: list[DataPoint]) -> None:
+    for _ in range(epochs):
+      for data_point in data_set:
+        output_layer = self.layers[-1]
+
+        for o in range(output_layer.outputs):
+          for i in range(output_layer.inputs):
+            pre_loss = self.loss(data_point, self.forward(data_point.inputs))
+
+            output_layer.weights[o,i] += NUDGE
+            post_loss = self.loss(data_point, self.forward(data_point.inputs))
+            output_layer.weights[o,i] -= NUDGE
+
+            output_layer.weights[o,i] -= learn_rate * ((post_loss - pre_loss) / NUDGE)
+        
+        for o in range(output_layer.outputs):
+          pre_loss = self.loss(data_point, self.forward(data_point.inputs))
+
+          output_layer.biases[0,o] += NUDGE
+          post_loss = self.loss(data_point, self.forward(data_point.inputs))
+          output_layer.biases[0,o] -= NUDGE
+
+          output_layer.biases[0,o] -= learn_rate * ((post_loss - pre_loss) / NUDGE)
 
 
-training_data = []
-for i in range(20):
-  a = vec2(random.uniform(0,1), random.uniform(0,1))
-  b = vec2(random.uniform(0,1), random.uniform(0,1))
-
-  training_data.append(DataPoint(
-    Tensor(1,4).load_list([a.x,a.y, b.x,b.y]),
-    Tensor(1,2).load_list([b.x-a.x, b.y-a.y])
-  ))
+data_set = [
+  DataPoint(numpy.array([0,0]).astype(numpy.float32), numpy.array([0,0]).astype(numpy.float32)),
+  DataPoint(numpy.array([0,1]).astype(numpy.float32), numpy.array([0,1]).astype(numpy.float32)),
+  DataPoint(numpy.array([1,0]).astype(numpy.float32), numpy.array([1,0]).astype(numpy.float32)),
+  DataPoint(numpy.array([1,1]).astype(numpy.float32), numpy.array([1,1]).astype(numpy.float32)),
+]
 
 fnn = FNN()
-fnn.add_layer(Layer.Dense(4,8))
-fnn.add_layer(Layer.Dense(8,2))
+fnn.add_layer(Dense(2,2))
 
 
 epoch_count = int(input("Enter Epoch Count: "))
 epoch_sample_rate = epoch_count // 10
 os.system("cls")
 
-pre_loss = fnn.loss(training_data[0], fnn.forward(training_data[0].inputs))
+pre_loss = fnn.loss(data_set[0], fnn.forward(data_set[0].inputs))
 
 print(f"training for {epoch_count} epochs...")
 for i in range(10):
   prev_time = time.perf_counter()
-  fnn.learn(epoch_sample_rate, .01, training_data)
-
+  fnn.learn(epoch_sample_rate, .01, data_set)
   sample_time = int((time.perf_counter() - prev_time) * 1000)
-  loss = fnn.loss(training_data[0], fnn.forward(training_data[0].inputs))
+  loss = fnn.loss(data_set[0], fnn.forward(data_set[0].inputs))
   print(f"{sample_time}ms | loss: {loss} | epochs: {epoch_sample_rate * (i + 1)}")
 print("training complete")
 
-print(f"\npre training loss: {pre_loss}")
-print(f"post training loss: {fnn.loss(training_data[0], fnn.forward(training_data[0].inputs))}")
-
-input("Press Enter to Continue...")
-
-
-VisualTest.init_window(VisualTest.ivec2(800,600), "Neural Network")
-
-def create_circle(x, y, r, **kwargs):
-  return VisualTest.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
-
-
-POINT_RADIUS = 25
-mouse_shape = create_circle(0,0, POINT_RADIUS, fill="red", width=0)
-model_positions = []
-for i in range(10):
-  pos = vec2(random.uniform(0,1), random.uniform(0,1))
-  model_positions.append([create_circle(0,0, POINT_RADIUS, fill="green", width=0), vec2(pos.x,pos.y)])
-
-def update() -> None:
-  window_pos = vec2(VisualTest.root.winfo_x(), VisualTest.root.winfo_y())
-  window_size = vec2(VisualTest.root.winfo_width(), VisualTest.root.winfo_height())
-  mouse_pos = vec2(VisualTest.root.winfo_pointerxy()) - window_pos - vec2(9,31)
-
-  delta_time = VisualTest.update_delta_time()
-
-  norm_mouse = vec2(mouse_pos / window_size)
-  mouse_shape_pos = norm_mouse * window_size - vec2(POINT_RADIUS,POINT_RADIUS)
-  VisualTest.canvas.moveto(mouse_shape, mouse_shape_pos.x, mouse_shape_pos.y)
-
-  for i in range(len(model_positions)):
-    shape = model_positions[i][0]
-    position = model_positions[i][1]
-
-    output = fnn.forward(Tensor(1,4).load_list([position.x,position.y, norm_mouse.x,norm_mouse.y]))
-    new_position = position + vec2(output.m_data[0], output.m_data[1]) * delta_time
-    model_positions[i][1] = vec2(min(1, max(0, new_position.x)), min(1, max(0, new_position.y)))
-
-    model_shape_pos = position * window_size - vec2(POINT_RADIUS,POINT_RADIUS)
-
-    VisualTest.canvas.moveto(shape, model_shape_pos.x, model_shape_pos.y)
-
-
-  VisualTest.root.after(10, update)
-
-update()
-VisualTest.root.mainloop()
+post_loss = fnn.loss(data_set[0], fnn.forward(data_set[0].inputs))
