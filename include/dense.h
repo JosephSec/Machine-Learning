@@ -30,12 +30,49 @@ inline void free_dense(Dense *_dst) {
 }
 
 
-inline void forward_inplace(Matrix *_dst, const Dense *_dense, const Matrix *_inputs) {
+inline void forward_dense_inplace(Matrix *_dst, const Dense *_dense, const Matrix *_inputs) {
   multiply_matrices_inplace(_dst, _inputs, &_dense->weights);
   add_matrices_inplace(_dst, _dst, &_dense->biases);
 }
-inline Matrix forward(const Dense *_dense, const Matrix *_inputs) {
+inline Matrix forward_dense(const Dense *_dense, const Matrix *_inputs) {
   Matrix output = create_matrix(1,_dense->outputCount, 0);
-  forward_inplace(&output, _dense, _inputs);
+  forward_dense_inplace(&output, _dense, _inputs);
   return output;
+}
+
+
+
+inline char* get_string_dense(const Dense *_dense) {  
+  char *weightsStr = get_string_matrix(&_dense->weights, 4);
+  char *biasesStr = get_string_matrix(&_dense->biases, 4);
+
+  const size_t weightsStrLen = 10 + strlen(weightsStr) + 1;
+  const size_t biasesStrLen = 9 + strlen(biasesStr);
+
+  char *buffer = malloc((weightsStrLen + biasesStrLen + 1) * sizeof(char));
+  
+  size_t byteIndex = 0;
+  { //Weights
+    strcpy(buffer + byteIndex, "weights = ");
+    byteIndex += 10;
+
+    strcpy(buffer + byteIndex, weightsStr);
+    byteIndex += weightsStrLen - 11;
+
+    buffer[byteIndex] = '\n';
+    byteIndex += 1;
+  } //Weights
+  { //Biases
+    strcpy(buffer + byteIndex, "biases = ");
+    byteIndex += 9;
+
+    strcpy(buffer + byteIndex, weightsStr);
+    byteIndex += weightsStrLen - 10;
+  } //Biases
+  buffer[byteIndex] = '\0';
+
+  free(weightsStr);
+  free(biasesStr);
+
+  return buffer;
 }

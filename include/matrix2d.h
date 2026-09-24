@@ -106,6 +106,22 @@ inline Matrix add_matrices(const Matrix *_a, const Matrix *_b) {
   return output;
 }
 
+inline void subtract_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
+  assert(_a->rows == _b->rows && "Can't subtract matrices when _a->rows != _b->rows");
+  assert(_a->cols == _b->cols && "Can't subtract matrices when _a->cols != _b->cols");
+
+  const unsigned int elementCount = _a->rows * _a->cols;
+
+  for(int i = 0; i < elementCount; i++) {
+    _dst->data[i] = _a->data[i] - _b->data[i];
+  }
+}
+inline Matrix subtract_matrices(const Matrix *_a, const Matrix *_b) {
+  Matrix output = copy_matrix(_a);
+  subtract_matrices_inplace(&output, _a, _b);
+  return output;
+}
+
 
 inline void fill_value_matrix(Matrix *_dst, float _value) {
   const unsigned int elementCount = _dst->rows * _dst->cols;
