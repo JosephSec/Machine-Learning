@@ -4,29 +4,20 @@
     {
       "label": "CompileExe",
       "type": "shell",
-      "command": "g++",
+      "command": "gcc",
       "args": [
+        "-D_UCRT",
+        
         "-O3", "-flto",
 
         "-I${workspaceFolder}/include",
 
         "-o", "${workspaceFolder}/build/program.exe",
 
-        "${workspaceFolder}/src/*.cpp",
-        "${workspaceFolder}/src/System/*.cpp",
+        "${workspaceFolder}/src/*.c",
 
-        "-lsfml-graphics", "-lsfml-window", "-lsfml-system", "-lglew32", "-lopengl32"
+        "-lucrt",
       ]
-    },
-    {
-      "label": "Release",
-      "type": "shell",
-      "command": "${workspaceFolder}/assets/Release.bat",
-    },
-    {
-      "label": "Import Tool",
-      "type": "shell",
-      "command": "C:/Users/${env:USERNAME}/OneDrive/Desktop/VsCode/cpp/my/tools/ImportTool.bat ${workspaceFolder}"
     },
     {
       "label": "Create Object Files",
@@ -37,11 +28,6 @@
       "label": "Create Static Object Files",
       "type": "shell",
       "command": "C:/Users/${env:USERNAME}/OneDrive/Desktop/VsCode/cpp/my/tools/CreateStaticObjectFiles.bat"
-    },
-    {
-      "label": "Create UI Object File",
-      "type": "shell",
-      "command": "${workspaceFolder}/assets/CreateUIObject.bat"
     }
   ]
 }

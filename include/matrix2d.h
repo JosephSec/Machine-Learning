@@ -1,0 +1,178 @@
+#include <assert.h>
+#include <string.h>
+#include <random.h>
+
+
+typedef struct {
+  unsigned int rows;
+  unsigned int cols;
+
+  float *data;
+} Matrix;
+
+
+Matrix create_matrix(unsigned int _rows, unsigned int _cols, float _fillVal) {
+  Matrix output;
+
+  const unsigned int elementCount = _rows * _cols;
+  output.data = malloc(elementCount * sizeof(float));
+
+  if(output.data != NULL) {
+    for(int i = 0; i < elementCount; i++) output.data[i] = _fillVal;
+  }
+
+  output.rows = _rows;
+  output.cols = _cols;
+
+  return output;
+}
+Matrix create_uniform_matrix(unsigned int _rows, unsigned int _cols, float _min, float _max) {
+  Matrix output;
+  
+  const unsigned int elementCount = _rows * _cols;
+  output.data = malloc(elementCount * sizeof(float));
+
+  if(output.data != NULL) fill_random_uniform(output.data, elementCount, _min, _max);
+
+  output.rows = _rows;
+  output.cols = _cols;
+
+  return output;
+}
+Matrix copy_matrix(const Matrix *_src) {
+  Matrix output;
+  
+  assert(_src->rows > 0 && _src->cols > 0 && "Cant copy matrix when _src->rows or _src->cols == 0");
+  size_t bufferSize = _src->rows * _src->cols * sizeof(float);
+
+  output.data = malloc(bufferSize);  
+  if(output.data != NULL) memcpy(output.data, _src->data, bufferSize);
+
+  output.rows = _src->rows;
+  output.cols = _src->cols;
+  return output;
+}
+
+float* get_element_ptr_matrix(Matrix *_src, unsigned int _row, unsigned int _col) {
+  return _src->data + (_col + _row * _src->cols);
+}
+float get_element_matrix(const Matrix *_src, unsigned int _row, unsigned int _col) {
+  return _src->data[_col + _row * _src->cols];
+}
+
+
+void multiply_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
+  assert(_a->cols == _b->rows && "Can't multiply matrices when _a->cols != _b->rows");
+
+  const unsigned int elementCount = _dst->rows * _dst->cols;
+  for(int i = 0; i < elementCount; i++) _dst->data[i] = 0;
+
+  for(int i = 0; i < _a->rows; ++i) {
+    for(int k = 0; k < _a->cols; ++k) {
+      const float aVal = get_element_matrix(_a, i,k);
+      
+      for(int j = 0; j < _b->cols; ++j) {
+        *get_element_ptr_matrix(_dst, i,j) += aVal * get_element_matrix(_b, k,j);
+      }
+    }
+  }
+}
+Matrix multiply_matrices(const Matrix *_a, const Matrix *_b) {
+  Matrix output = create_matrix(_a->rows, _b->cols, 0);
+  multiply_matrices_inplace(&output, _a, _b);
+  return output;
+}
+
+void add_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
+  assert(_a->rows == _b->rows && "Can't add matrices when _a->rows != _b->rows");
+  assert(_a->cols == _b->cols && "Can't add matrices when _a->cols != _b->cols");
+
+  const unsigned int elementCount = _a->rows * _a->cols;
+
+  for(int i = 0; i < elementCount; i++) {
+    _dst->data[i] = _a->data[i] + _b->data[i];
+  }
+}
+Matrix add_matrices(const Matrix *_a, const Matrix *_b) {
+  Matrix output = copy_matrix(_a);
+  add_matrices_inplace(&output, _a, _b);
+  return output;
+}
+
+
+void fill_value_matrix(Matrix *_dst, float _value) {
+  const unsigned int elementCount = _dst->rows * _dst->cols;
+  for(int i = 0; i < elementCount; i++) _dst->data[i] = _value;
+}
+void fill_uniform_matrix(Matrix *_dst, float _min, float _max) {
+  fill_random_uniform(_dst->data, _dst->rows * _dst->cols, _min, _max);
+}
+
+
+char* get_string_matrix_row(const float *_src, unsigned int _cols, unsigned int _precision) {
+  size_t sizeBytes = _cols * (_precision + 7) + 2 + 1;
+  char *buffer = malloc(sizeBytes * sizeof(char));
+
+  if(buffer == NULL) return NULL;
+
+  buffer[0] = '[';
+  
+  int byteIndex = 1;
+  for(int i = 0; i < _cols - 1; i++) {
+    byteIndex += snprintf(buffer + byteIndex, sizeBytes - byteIndex, "%.*f, ", _precision, _src[i]);
+  }
+  byteIndex += snprintf(buffer + byteIndex, sizeBytes - byteIndex, "%.*f", _precision, _src[_cols - 1]);
+  
+  buffer[byteIndex] = ']';
+  buffer[byteIndex + 1] = '\0';
+
+  return buffer;
+}
+char* get_string_matrix(const Matrix *_src, unsigned int _precision) {
+  const unsigned int elementCount = _src->rows * _src->cols;
+
+  if(elementCount == 0) {
+    char *buffer = malloc(3 * sizeof(char));
+    if(buffer == NULL) return NULL;
+
+    strcpy(buffer, "[]");
+    return buffer;
+  }
+
+  size_t sizeBytes = 2 + _src->rows * (1 + (_src->cols * (_precision + 5) + 2 + 1));
+  char *buffer = malloc(sizeBytes * sizeof(char));
+  
+  if(buffer == NULL) return NULL;
+  
+  strcpy(buffer, "[\n");
+  unsigned int byteIndex = 2;
+  for(unsigned int row = 0; row < _src->rows - 1; row++) {
+    buffer[byteIndex] = '\t';
+    byteIndex += 1;
+
+    char *rowStr = get_string_matrix_row(_src->data + (_src->cols * row), _src->cols, _precision);
+    strcpy(buffer + byteIndex, rowStr);
+    byteIndex += strlen(rowStr);
+    free(rowStr);
+
+    buffer[byteIndex] = '\n';
+    byteIndex += 1;
+  }
+  
+  buffer[byteIndex] = '\t';
+  byteIndex += 1;
+
+  char *rowStr = get_string_matrix_row(_src->data + (_src->cols * (_src->rows - 1)), _src->cols, _precision);
+  strcpy(buffer + byteIndex, rowStr);
+  byteIndex += strlen(rowStr);
+  free(rowStr);
+
+  buffer[byteIndex] = '\n';
+  buffer[byteIndex + 1] = ']';
+  buffer[byteIndex + 2] = '\0';
+
+  char *trimmed_buffer = realloc(buffer, byteIndex + 3);
+  if(trimmed_buffer != NULL) buffer = trimmed_buffer;
+
+  return buffer;
+}
