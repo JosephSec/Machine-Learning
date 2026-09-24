@@ -1,3 +1,5 @@
+#pragma once
+
 #include <assert.h>
 #include <string.h>
 #include <random.h>
@@ -11,7 +13,7 @@ typedef struct {
 } Matrix;
 
 
-Matrix create_matrix(unsigned int _rows, unsigned int _cols, float _fillVal) {
+inline Matrix create_matrix(unsigned int _rows, unsigned int _cols, float _fillVal) {
   Matrix output;
 
   const unsigned int elementCount = _rows * _cols;
@@ -26,7 +28,7 @@ Matrix create_matrix(unsigned int _rows, unsigned int _cols, float _fillVal) {
 
   return output;
 }
-Matrix create_uniform_matrix(unsigned int _rows, unsigned int _cols, float _min, float _max) {
+inline Matrix create_uniform_matrix(unsigned int _rows, unsigned int _cols, float _min, float _max) {
   Matrix output;
   
   const unsigned int elementCount = _rows * _cols;
@@ -39,7 +41,7 @@ Matrix create_uniform_matrix(unsigned int _rows, unsigned int _cols, float _min,
 
   return output;
 }
-Matrix copy_matrix(const Matrix *_src) {
+inline Matrix copy_matrix(const Matrix *_src) {
   Matrix output;
   
   assert(_src->rows > 0 && _src->cols > 0 && "Cant copy matrix when _src->rows or _src->cols == 0");
@@ -53,15 +55,20 @@ Matrix copy_matrix(const Matrix *_src) {
   return output;
 }
 
-float* get_element_ptr_matrix(Matrix *_src, unsigned int _row, unsigned int _col) {
+inline void free_matrix(Matrix *_dst) {
+  free(_dst->data);
+}
+
+
+inline float* get_element_ptr_matrix(Matrix *_src, unsigned int _row, unsigned int _col) {
   return _src->data + (_col + _row * _src->cols);
 }
-float get_element_matrix(const Matrix *_src, unsigned int _row, unsigned int _col) {
+inline float get_element_matrix(const Matrix *_src, unsigned int _row, unsigned int _col) {
   return _src->data[_col + _row * _src->cols];
 }
 
 
-void multiply_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
+inline void multiply_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
   assert(_a->cols == _b->rows && "Can't multiply matrices when _a->cols != _b->rows");
 
   const unsigned int elementCount = _dst->rows * _dst->cols;
@@ -77,13 +84,13 @@ void multiply_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b)
     }
   }
 }
-Matrix multiply_matrices(const Matrix *_a, const Matrix *_b) {
+inline Matrix multiply_matrices(const Matrix *_a, const Matrix *_b) {
   Matrix output = create_matrix(_a->rows, _b->cols, 0);
   multiply_matrices_inplace(&output, _a, _b);
   return output;
 }
 
-void add_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
+inline void add_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
   assert(_a->rows == _b->rows && "Can't add matrices when _a->rows != _b->rows");
   assert(_a->cols == _b->cols && "Can't add matrices when _a->cols != _b->cols");
 
@@ -93,18 +100,18 @@ void add_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
     _dst->data[i] = _a->data[i] + _b->data[i];
   }
 }
-Matrix add_matrices(const Matrix *_a, const Matrix *_b) {
+inline Matrix add_matrices(const Matrix *_a, const Matrix *_b) {
   Matrix output = copy_matrix(_a);
   add_matrices_inplace(&output, _a, _b);
   return output;
 }
 
 
-void fill_value_matrix(Matrix *_dst, float _value) {
+inline void fill_value_matrix(Matrix *_dst, float _value) {
   const unsigned int elementCount = _dst->rows * _dst->cols;
   for(int i = 0; i < elementCount; i++) _dst->data[i] = _value;
 }
-void fill_uniform_matrix(Matrix *_dst, float _min, float _max) {
+inline void fill_uniform_matrix(Matrix *_dst, float _min, float _max) {
   fill_random_uniform(_dst->data, _dst->rows * _dst->cols, _min, _max);
 }
 
@@ -128,7 +135,7 @@ char* get_string_matrix_row(const float *_src, unsigned int _cols, unsigned int 
 
   return buffer;
 }
-char* get_string_matrix(const Matrix *_src, unsigned int _precision) {
+inline char* get_string_matrix(const Matrix *_src, unsigned int _precision) {
   const unsigned int elementCount = _src->rows * _src->cols;
 
   if(elementCount == 0) {
