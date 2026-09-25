@@ -32,6 +32,14 @@ inline void free_dense(Dense *_dst) {
 }
 
 
+inline void reshape_matrix_to_input_dense(const Dense *_dense, Matrix *_dst) {
+  reshape_matrix(_dst, 1, _dense->inputCount);
+}
+inline void reshape_matrix_to_output_dense(const Dense *_dense, Matrix *_dst) {
+  reshape_matrix(_dst, 1, _dense->outputCount);
+}
+
+
 inline void forward_dense_inplace(const Dense *_dense, Matrix *_dst, const Matrix *_inputs) {
   multiply_matrices_inplace(_dst, _inputs, &_dense->weights);
   add_matrices_inplace(_dst, _dst, &_dense->biases);
@@ -41,7 +49,6 @@ inline Matrix forward_dense(const Dense *_dense, const Matrix *_inputs) {
   forward_dense_inplace(_dense, &output, _inputs);
   return output;
 }
-
 
 
 inline char* get_string_dense(const Dense *_dense) {  

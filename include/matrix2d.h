@@ -5,6 +5,8 @@
 #include <string.h>
 #include <random.h>
 
+#include <debug.h>
+
 
 typedef struct {
   unsigned int rows;
@@ -79,10 +81,17 @@ inline float get_element_matrix(const Matrix *_src, unsigned int _row, unsigned 
 
 
 inline void multiply_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
-  assert(_a->cols == _b->rows && "Can't multiply matrices when _a->cols != _b->rows");
+  ASSERT_MSG(_a->cols == _b->rows, "MATRIX",
+    "Can't multiply matrices (%ix%i) and (%ix%i)",
+    _a->rows, _a->cols, _b->rows, _b->cols);
 
-  const unsigned int elementCount = _dst->rows * _dst->cols;
-  for(int i = 0; i < elementCount; i++) _dst->data[i] = 0;
+  ASSERT_MSG(_dst->data != NULL, "MATRIX",
+    "Can't multiply matrices, _dst must be pre-allocated");
+    
+  ASSERT_MSG(_dst->rows == _a->rows && _dst->cols == _b->cols, "MATRIX",
+    "Can't subtract matrices, _dst(%ix%i) matrix shape should match (%ix%i)",
+    _dst->rows, _dst->cols, _a->rows, _b->cols);
+
 
   for(int i = 0; i < _a->rows; ++i) {
     for(int k = 0; k < _a->cols; ++k) {
@@ -101,9 +110,17 @@ inline Matrix multiply_matrices(const Matrix *_a, const Matrix *_b) {
 }
 
 inline void add_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
-  assert(_a->rows == _b->rows && "Can't add matrices when _a->rows != _b->rows");
-  assert(_a->cols == _b->cols && "Can't add matrices when _a->cols != _b->cols");
+  ASSERT_MSG(_a->cols == _b->cols && _a->rows == _b->rows, "MATRIX",
+    "Can't add matrices (%ix%i) and (%ix%i)",
+    _a->rows, _a->cols, _b->rows, _b->cols);
 
+  ASSERT_MSG(_dst->data != NULL, "MATRIX",
+    "Can't add matrices, _dst must be pre-allocated");
+    
+  ASSERT_MSG(_dst->rows == _a->rows && _dst->cols == _a->cols, "MATRIX",
+    "Can't add matrices, _dst(%ix%i) matrix shape should match (%ix%i)",
+    _dst->rows, _dst->cols, _a->rows, _a->cols);
+  
   const unsigned int elementCount = _a->rows * _a->cols;
 
   for(int i = 0; i < elementCount; i++) {
@@ -117,8 +134,16 @@ inline Matrix add_matrices(const Matrix *_a, const Matrix *_b) {
 }
 
 inline void subtract_matrices_inplace(Matrix *_dst, const Matrix *_a, const Matrix *_b) {
-  assert(_a->rows == _b->rows && "Can't subtract matrices when _a->rows != _b->rows");
-  assert(_a->cols == _b->cols && "Can't subtract matrices when _a->cols != _b->cols");
+  ASSERT_MSG(_a->cols == _b->cols && _a->rows == _b->rows, "MATRIX",
+    "Can't subtract matrices (%ix%i) and (%ix%i)",
+    _a->rows, _a->cols, _b->rows, _b->cols);
+
+  ASSERT_MSG(_dst->data != NULL, "MATRIX",
+    "Can't add matrices, _dst must be pre-allocated");
+    
+  ASSERT_MSG(_dst->rows == _a->rows && _dst->cols == _a->cols, "MATRIX",
+    "Can't subtract matrices, _dst(%ix%i) matrix shape should match (%ix%i)",
+    _dst->rows, _dst->cols, _a->rows, _a->cols);
 
   const unsigned int elementCount = _a->rows * _a->cols;
 
@@ -139,6 +164,14 @@ inline void fill_value_matrix(Matrix *_dst, float _value) {
 }
 inline void fill_uniform_matrix(Matrix *_dst, float _min, float _max) {
   fill_random_uniform(_dst->data, _dst->rows * _dst->cols, _min, _max);
+}
+
+inline void reshape_matrix(Matrix *_dst, unsigned int _rows, unsigned int _cols) {
+  const unsigned int elementCount = _rows * _cols;
+
+  _dst->rows = _rows;
+  _dst->cols = _cols;
+  _dst->data = realloc(_dst->data, elementCount * sizeof(float));
 }
 
 
@@ -214,4 +247,15 @@ inline char* get_string_matrix(const Matrix *_src, unsigned int _precision) {
   if(trimmed_buffer != NULL) buffer = trimmed_buffer;
 
   return buffer;
+}
+
+void print_matrix(const char *_str, const Matrix *_matrix, unsigned int _precision) {
+  char *matrixStr = get_string_matrix(_matrix, 4);
+  printf(_str, matrixStr);
+  free(matrixStr);
+}
+void print_matrix_row(const char *_str, const Matrix *_matrix, unsigned int _row, unsigned int _precision) {
+  char *rowStr = get_string_matrix_row(_matrix->data + _row * _matrix->cols, _matrix->cols, _precision);
+  printf(_str, rowStr);
+  free(rowStr);
 }

@@ -55,16 +55,38 @@ float test_matrix_functions(uint64_t iterations) {
 }
 
 
-void print_matrix(const char *_str, const Matrix *_matrix, unsigned int _precision) {
-  char *matrixStr = get_string_matrix(_matrix, 4);
-  printf(_str, matrixStr);
-  free(matrixStr);
+#define MATCH_DATASET false
+#define XOR_DATASET true
+
+void create_dataset(DataPoint **_dst) {
+  
+  #if MATCH_DATASET
+    (*_dst) = malloc(4 * sizeof(DataPoint));
+
+    float inputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
+    float outputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
+
+    for(int i = 0; i < 4; i++) {
+      (*_dst)[i] = (DataPoint){
+        .inputs = create_list_matrix(1,2, inputs[i]),
+        .expectedOutput = create_list_matrix(1,2, outputs[i]),
+      };
+    }
+  #elif XOR_DATASET
+    (*_dst) = malloc(4 * sizeof(DataPoint));
+
+    float inputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
+    float outputs[4][1] = {{0}, {1}, {1}, {0}};
+
+    for(int i = 0; i < 4; i++) {
+      (*_dst)[i] = (DataPoint){
+        .inputs = create_list_matrix(1,2, inputs[i]),
+        .expectedOutput = create_list_matrix(1,1, outputs[i]),
+      };
+    }
+  #endif
 }
-void print_matrix_row(const char *_str, const Matrix *_matrix, unsigned int _row, unsigned int _precision) {
-  char *rowStr = get_string_matrix_row(_matrix->data + _row * _matrix->cols, _matrix->cols, _precision);
-  printf(_str, rowStr);
-  free(rowStr);
-}
+
 
 size_t get_console_ull(const char *_msg, size_t bufferSize, bool clear_after) {
   char inputBuffer[bufferSize];
@@ -87,23 +109,40 @@ int main(int argc, char* argv[]) {
   #endif
 
 
-  FNN fnn = create_fnn((unsigned int[]){2,2,1}, 2);
+  #if MATCH_DATASET
+    FNN fnn = create_fnn((unsigned int[]){2,2}, 1);
+  #elif XOR_DATASET
+    FNN fnn = create_fnn((unsigned int[]){2,2,1}, 2);
+  #endif
 
-  DataPoint dataPoint = (DataPoint) {
-    .inputs = create_list_matrix(1,2, (float[]){0,1}),
-    .expectedOutput = create_list_matrix(1,2, (float[]){1}),
-  };
+  print_fnn_structure("FNN Structure: %s\n\n", &fnn);
 
-  Matrix outputA = forward_dense(&fnn.layers[0], &dataPoint.inputs);
-  Matrix outputB = forward_dense(&fnn.layers[1], &dataPoint.inputs);
+  DataPoint *dataSet;
+  create_dataset(&dataSet);
 
-  print_matrix_row("Input: %s\n", &dataPoint.inputs, 0, 4);
-  print_matrix_row("Output A: %s\n", &outputA, 0, 4);
-  print_matrix_row("Output B: %s\n", &outputB, 0, 4);
+  Matrix current_in;
+  Matrix current_out;
+  for(int i = 0; i < 4; i++) {
+    print_matrix_row("Input: %s\n", &dataSet[i].inputs, 0, 4);
+    
+    current_in = copy_matrix(&dataSet[i].inputs);
 
-  free_datapoint(&dataPoint);
-  free_matrix(&outputA);
-  free_matrix(&outputB);
+    for(int j = 0; j < fnn.layerCount; j++) {
+      reshape_matrix_to_output_dense(&fnn.layers[j], &current_out);    
+      fill_value_matrix(&current_out, 0);
+      
+      forward_dense_inplace(&fnn.layers[j], &current_out, &current_in);
+
+      free_matrix(&current_in);
+
+      if(j < fnn.layerCount - 1) current_in = current_out;
+    }
+
+    print_matrix_row("Output: %s\n\n", &current_out, 0, 4);
+
+  }
+  free_matrix(&current_in);
+  free_matrix(&current_out);
 
   getchar();
   return 0;

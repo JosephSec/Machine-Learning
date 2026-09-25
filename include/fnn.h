@@ -34,18 +34,35 @@ inline void reshape_matrix_to_input_layer(Matrix *_dst, const FNN *_fnn) {
 
 
 inline void forward_fnn_inplace(const FNN *_fnn, Matrix *_dst, const Matrix *_input) {
-  Matrix temp_inputs;
-  copy_matrix_inplace(&temp_inputs, _input);
+  return;
+}
+inline Matrix forward_fnn(const FNN *_fnn, const Matrix *_input) {
+  Matrix output;
+  forward_fnn_inplace(_fnn, &output, _input);
+  return output;
+}
 
+
+inline char* get_string_fnn_structure(const FNN *_fnn) {
+  const size_t byteSize = _fnn->layerCount * (10 + 2);
+  char *buffer = malloc(byteSize * sizeof(char));
+
+  size_t byteIndex = 0;
   for(int i = 0; i < _fnn->layerCount; i++) {
-    Matrix next_output;
-    forward_dense_inplace(&_fnn->layers[i], &next_output, &temp_inputs);
-
-    free_matrix(&temp_inputs);
-
-    temp_inputs = next_output;
+    byteIndex += snprintf(buffer + byteIndex, byteSize - byteIndex, "%i->", _fnn->layers[i].inputCount);
   }
+  byteIndex += snprintf(buffer + byteIndex, byteSize - byteIndex, "%i", _fnn->layers[_fnn->layerCount - 1].outputCount);
 
-  copy_matrix_inplace(_dst, &temp_inputs);
-  free_matrix(&temp_inputs);
+  buffer[byteIndex] = '\0';
+  byteIndex += 1;
+
+  buffer = realloc(buffer, byteIndex);
+
+  return buffer;
+}
+
+inline void print_fnn_structure(const char *_str, const FNN *_fnn) {
+  char *fnnStr = get_string_fnn_structure(_fnn);
+  printf(_str, fnnStr);
+  free(fnnStr);
 }
