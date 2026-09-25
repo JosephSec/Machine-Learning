@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <random.h>
@@ -41,19 +42,28 @@ inline Matrix create_uniform_matrix(unsigned int _rows, unsigned int _cols, floa
 
   return output;
 }
-inline Matrix copy_matrix(const Matrix *_src) {
-  Matrix output;
-  
-  assert(_src->rows > 0 && _src->cols > 0 && "Cant copy matrix when _src->rows or _src->cols == 0");
-  size_t bufferSize = _src->rows * _src->cols * sizeof(float);
-
-  output.data = malloc(bufferSize);  
-  if(output.data != NULL) memcpy(output.data, _src->data, bufferSize);
-
-  output.rows = _src->rows;
-  output.cols = _src->cols;
+inline Matrix create_list_matrix(unsigned int _rows, unsigned int _cols, const float *_data) {
+  Matrix output = create_matrix(_rows, _cols, 0);
+  memcpy(output.data, _data, _rows * _cols * sizeof(float));
   return output;
 }
+inline void copy_matrix_inplace(Matrix *_dst, const Matrix *_src) {
+  assert(_src->rows > 0 && _src->cols > 0 && "Cant copy matrix when _src->rows or _src->cols == 0");
+  
+  size_t bufferSize = _src->rows * _src->cols * sizeof(float);
+  _dst->data = realloc(_dst->data, bufferSize);
+
+  if(_dst->data != NULL) memcpy(_dst->data, _src->data, bufferSize);
+
+  _dst->rows = _src->rows;
+  _dst->cols = _src->cols;
+}
+inline Matrix copy_matrix(const Matrix *_src) {
+  Matrix output;
+  copy_matrix_inplace(&output, _src);
+  return output;
+}
+
 
 inline void free_matrix(Matrix *_dst) {
   free(_dst->data);
@@ -133,8 +143,14 @@ inline void fill_uniform_matrix(Matrix *_dst, float _min, float _max) {
 
 
 char* get_string_matrix_row(const float *_src, unsigned int _cols, unsigned int _precision) {
+  char *buffer;
+  if(_cols == 0) {
+    buffer = strdup("[]");
+    return buffer;
+  }
+
   size_t sizeBytes = _cols * (_precision + 7) + 2 + 1;
-  char *buffer = malloc(sizeBytes * sizeof(char));
+  buffer = malloc(sizeBytes * sizeof(char));
 
   if(buffer == NULL) return NULL;
 

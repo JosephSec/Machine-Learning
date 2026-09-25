@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include <time.h>
 
 
@@ -8,13 +9,13 @@ typedef struct {
 } Clock;
 
 
-Clock create_clock() {
+inline Clock create_clock() {
   Clock output;
   timespec_get(&output.startTime, 1);
   return output;
 }
 
-float restart_clock(Clock *_clock) {
+inline float restart_clock(Clock *_clock) {
   struct timespec current;
   timespec_get(&current, 1);
 

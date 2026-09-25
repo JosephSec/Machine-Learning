@@ -14,7 +14,7 @@
 
         "-o", "${workspaceFolder}/build/program.exe",
 
-        "${workspaceFolder}/src/*.c",
+        "${workspaceFolder}/src/main.c",
 
         "-lucrt",
       ]

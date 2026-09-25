@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdlib.h>
+
 #include <matrix2d.h>
 
 
@@ -30,13 +32,13 @@ inline void free_dense(Dense *_dst) {
 }
 
 
-inline void forward_dense_inplace(Matrix *_dst, const Dense *_dense, const Matrix *_inputs) {
+inline void forward_dense_inplace(const Dense *_dense, Matrix *_dst, const Matrix *_inputs) {
   multiply_matrices_inplace(_dst, _inputs, &_dense->weights);
   add_matrices_inplace(_dst, _dst, &_dense->biases);
 }
 inline Matrix forward_dense(const Dense *_dense, const Matrix *_inputs) {
   Matrix output = create_matrix(1,_dense->outputCount, 0);
-  forward_dense_inplace(&output, _dense, _inputs);
+  forward_dense_inplace(_dense, &output, _inputs);
   return output;
 }
 
