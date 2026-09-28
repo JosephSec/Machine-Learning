@@ -15,6 +15,7 @@ typedef struct {
   float *data;
 } Matrix;
 
+#define EMPTY_MATRIX (Matrix){.rows = 0, .cols = 0, .data = NULL};
 
 inline Matrix create_matrix(unsigned int _rows, unsigned int _cols, float _fillVal) {
   Matrix output;
@@ -68,7 +69,8 @@ inline Matrix copy_matrix(const Matrix *_src) {
 
 
 inline void free_matrix(Matrix *_dst) {
-  free(_dst->data);
+  if(_dst->data != NULL) free(_dst->data);
+  *_dst = EMPTY_MATRIX;
 }
 
 
@@ -171,7 +173,9 @@ inline void reshape_matrix(Matrix *_dst, unsigned int _rows, unsigned int _cols)
 
   _dst->rows = _rows;
   _dst->cols = _cols;
-  _dst->data = realloc(_dst->data, elementCount * sizeof(float));
+
+  if(_dst->data == NULL) _dst->data = malloc(elementCount * sizeof(float));
+  else _dst->data = realloc(_dst->data, elementCount * sizeof(float));
 }
 
 

@@ -3,38 +3,72 @@
 #include <stdlib.h>
 
 #include <dense.h>
+#include <loss.h>
 
 
 typedef struct {
   Dense *layers;
   unsigned int layerCount;
+
+  LossType loss;
+  LossFunction lossFunc;
 } FNN;
 
+inline void set_loss_function_fnn(FNN *_fnn, LossType _loss) {
+  _fnn->loss = _loss;
 
-inline FNN create_fnn(unsigned int *_layerConfig, unsigned int _layerCount) {
+  switch(_loss) {
+    default:
+    case LOSS_MSE: {
+      _fnn->lossFunc = calculate_mse_loss;
+      break;
+    }
+    case LOSS_BCE: {
+      _fnn->lossFunc = calculate_bce_loss;
+      break;
+    }
+  }
+}
+inline FNN create_fnn(unsigned int *_layerSizes, ActivationType *_layerActivations, Initializer *_layerInitializers, unsigned int _layerCount, LossType _loss) {
   FNN output;
   output.layerCount = _layerCount;
+  set_loss_function_fnn(&output, _loss);
 
   output.layers = malloc(output.layerCount * sizeof(Dense));
   for(int i = 0; i < output.layerCount; i++) {
-    output.layers[i] = create_dense(_layerConfig[i], _layerConfig[i + 1]);
+    output.layers[i] = create_dense(_layerSizes[i], _layerSizes[i + 1], _layerActivations[i], _layerInitializers + (i * 2));
+  }
+
+  for(int i = 0; i < output.layerCount * 2; i++) {
+    free_initializer(&_layerInitializers[i]);
   }
 
   return output;
 }
 
 
-inline void reshape_matrix_to_input_layer(Matrix *_dst, const FNN *_fnn) {
-  const Dense *inputLayer = &_fnn->layers[0];
-
-  _dst->rows = 1;
-  _dst->cols = inputLayer->inputCount;
-  _dst->data = realloc(_dst->data, _dst->rows * _dst->cols * sizeof(float));
-}
-
-
 inline void forward_fnn_inplace(const FNN *_fnn, Matrix *_dst, const Matrix *_input) {
-  return;
+  Matrix current_in = copy_matrix(_input);
+
+  free_matrix(_dst);
+  // *_dst = EMPTY_MATRIX;
+
+  for(int j = 0; j < _fnn->layerCount; j++) {
+    reshape_matrix_to_output_dense(&_fnn->layers[j], _dst); //MEMORY LEAK IN ONE OF THESE
+    fill_value_matrix(_dst, 0); //MEMORY LEAK IN ONE OF THESE
+    
+    continue;
+    forward_dense_inplace(&_fnn->layers[j], _dst, &current_in);
+
+    free_matrix(&current_in);
+
+    if(j < _fnn->layerCount - 1) {
+      current_in = *_dst;
+      *_dst = EMPTY_MATRIX;
+    }
+  }
+  
+  free_matrix(&current_in);
 }
 inline Matrix forward_fnn(const FNN *_fnn, const Matrix *_input) {
   Matrix output;

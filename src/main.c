@@ -1,12 +1,15 @@
 #include <stdio.h>
 
+#include <debug.h>
 #include <clock.h>
 
 #include <fnn.h>
 #include <datapoint.h>
+#include <learn.h>
 
 
 #define DO_MATRIX_TEST false
+#define LOG_PRECISION 6
 
 void test_matrix(Matrix *_inputs, Matrix *_weights, Matrix *_biases, Matrix *_output, bool log_values) {
   multiply_matrices_inplace(_output, _inputs, _weights);
@@ -55,94 +58,50 @@ float test_matrix_functions(uint64_t iterations) {
 }
 
 
-#define MATCH_DATASET false
-#define XOR_DATASET true
+//Optimizer learnRate, nudge, and dataSet are overwritten by the loaded model
+void load_model_data(FNN *_fnn, Optimizer *_optimizer) {
+  const size_t option = get_console_ull("Enter Model Option\n[1]: Match\n[2]: Xor\nEnter Choice: ", 2, true);
 
-void create_dataset(DataPoint **_dst) {
-  
-  #if MATCH_DATASET
-    (*_dst) = malloc(4 * sizeof(DataPoint));
-
-    float inputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
-    float outputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
-
-    for(int i = 0; i < 4; i++) {
-      (*_dst)[i] = (DataPoint){
-        .inputs = create_list_matrix(1,2, inputs[i]),
-        .expectedOutput = create_list_matrix(1,2, outputs[i]),
-      };
-    }
-  #elif XOR_DATASET
-    (*_dst) = malloc(4 * sizeof(DataPoint));
-
-    float inputs[4][2] = {{0,0}, {0,1}, {1,0}, {1,1}};
-    float outputs[4][1] = {{0}, {1}, {1}, {0}};
-
-    for(int i = 0; i < 4; i++) {
-      (*_dst)[i] = (DataPoint){
-        .inputs = create_list_matrix(1,2, inputs[i]),
-        .expectedOutput = create_list_matrix(1,1, outputs[i]),
-      };
-    }
-  #endif
-}
-
-
-size_t get_console_ull(const char *_msg, size_t bufferSize, bool clear_after) {
-  char inputBuffer[bufferSize];
-  
-  printf("%s: ", _msg);
-  
-  fgets(inputBuffer, sizeof(inputBuffer), stdin);
-  inputBuffer[strcspn(inputBuffer, "\n")] = '\0';
-
-  if(clear_after == true) system("cls");
-
-  return strtoull(inputBuffer, nullptr, 10);
+  switch(option) {
+    default:
+    case 1: //Match
+      get_match_model(_fnn, _optimizer);
+      break;
+    case 2: //Xor
+      get_xor_model(_fnn, _optimizer);
+      break;
+  }
 }
 int main(int argc, char* argv[]) {
   #if DO_MATRIX_TEST
-    float deltaTime = test_matrix_functions(get_console_ull("Enter Test Iterations", 64, false));
+    float deltaTime = test_matrix_functions(get_console_ull("Enter Test Iterations: ", 64, false));
     printf("test time: %ims\n", (int)(deltaTime * 1000));
     getchar();
     system("cls");
   #endif
 
+  const size_t epochs = get_console_ull("Enter Epoch Count: ", 64, false);
+  Optimizer optimizer = create_optimizer(1e-2, 1e-7, epochs, 10);
 
-  #if MATCH_DATASET
-    FNN fnn = create_fnn((unsigned int[]){2,2}, 1);
-  #elif XOR_DATASET
-    FNN fnn = create_fnn((unsigned int[]){2,2,1}, 2);
-  #endif
+  FNN fnn;
+  load_model_data(&fnn, &optimizer);
+  flush_stdin();
 
   print_fnn_structure("FNN Structure: %s\n\n", &fnn);
+  printf("Pre Training Results\n\n");
+  log_data_set_loss(&fnn, &optimizer.dataSet, LOG_PRECISION);
+  getchar();
+  system("cls");
 
-  DataPoint *dataSet;
-  create_dataset(&dataSet);
+  printf("training for %i epochs...\n", epochs);
+  log_finite_difference_train_fnn(&fnn, &optimizer, LOG_PRECISION);
+  printf("training complete.");
+  getchar();
+  system("cls");
 
-  Matrix current_in;
-  Matrix current_out;
-  for(int i = 0; i < 4; i++) {
-    print_matrix_row("Input: %s\n", &dataSet[i].inputs, 0, 4);
-    
-    current_in = copy_matrix(&dataSet[i].inputs);
-
-    for(int j = 0; j < fnn.layerCount; j++) {
-      reshape_matrix_to_output_dense(&fnn.layers[j], &current_out);    
-      fill_value_matrix(&current_out, 0);
-      
-      forward_dense_inplace(&fnn.layers[j], &current_out, &current_in);
-
-      free_matrix(&current_in);
-
-      if(j < fnn.layerCount - 1) current_in = current_out;
-    }
-
-    print_matrix_row("Output: %s\n\n", &current_out, 0, 4);
-
-  }
-  free_matrix(&current_in);
-  free_matrix(&current_out);
+  print_fnn_structure("FNN Structure: %s\n\n", &fnn);
+  printf("Post Training Results (%i epochs)\n\n", epochs);
+  log_data_set_loss(&fnn, &optimizer.dataSet, LOG_PRECISION);
 
   getchar();
   return 0;
